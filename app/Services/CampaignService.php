@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Jobs\SendCampaignEmail;
 use App\Models\Campaign;
 use App\Models\CampaignSend;
+use App\Models\Contact;
+use Illuminate\Support\Facades\Log;
 
 class CampaignService
 {
@@ -13,21 +15,37 @@ class CampaignService
      */
     public function dispatch(Campaign $campaign): void
     {
-        $contacts = $campaign->contactList->contacts()
-            ->where('status', 'active')
+        $contactList = $campaign->contactList;
+        if (!$contactList) {
+            Log::warning('Campaign dispatch skipped: missing contact list', [
+                'campaign_id' => $campaign->id,
+                'contact_list_id' => $campaign->contact_list_id,
+            ]);
+
+            return;
+        }
+
+        $contacts = $contactList->contacts()
+            ->where('status', Contact::STATUS_ACTIVE)
             ->get();
 
         foreach ($contacts as $contact) {
-            $send = CampaignSend::create([
-                'campaign_id' => $campaign->id,
-                'contact_id'  => $contact->id,
-                'status'      => 'pending',
-            ]);
+            $send = CampaignSend::firstOrCreate(
+                [
+                    'campaign_id' => $campaign->id,
+                    'contact_id'  => $contact->id,
+                ],
+                [
+                    'status' => CampaignSend::STATUS_PENDING,
+                ],
+            );
 
-            SendCampaignEmail::dispatch($send->id);
+            if ($send->wasRecentlyCreated) {
+                SendCampaignEmail::dispatch($send->id);
+            }
         }
 
-        $campaign->update(['status' => 'sending']);
+        $campaign->update(['status' => Campaign::STATUS_SENDING]);
     }
 
     public function buildPayload(Campaign $campaign, array $extra = []): array

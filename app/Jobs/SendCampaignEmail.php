@@ -14,27 +14,25 @@ class SendCampaignEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-
     public function __construct(
         private readonly int $campaignSendId
     ) {}
-
     public function handle(): void
     {
         $send = CampaignSend::find($this->campaignSendId);
 
-        if (!$send) {
+        if (!$send || !in_array($send->status, [CampaignSend::STATUS_PENDING, CampaignSend::STATUS_FAILED], true)) {
             return;
         }
 
         try {
             $this->sendEmail($send->contact->email, $send->campaign->subject, $send->campaign->body);
 
-            $send->update(['status' => 'sent']);
+            $send->update(['status' => CampaignSend::STATUS_SENT]);
 
         } catch (\Exception $e) {
             $send->update([
-                'status'        => 'failed',
+                'status'        => CampaignSend::STATUS_FAILED,
                 'error_message' => $e->getMessage(),
             ]);
 
