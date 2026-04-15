@@ -20,6 +20,8 @@ class Campaign extends Model
         self::STATUS_SENT,
     ];
 
+    protected $table = 'campaigns';
+
     protected $fillable = ['subject', 'body', 'contact_list_id', 'status', 'scheduled_at', 'reply_to'];
 
     protected $casts = [

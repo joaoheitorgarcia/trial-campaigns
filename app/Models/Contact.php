@@ -17,6 +17,8 @@ class Contact extends Model
         self::STATUS_UNSUBSCRIBED,
     ];
 
+    protected $table = 'contacts';
+
     protected $fillable = ['name', 'email', 'status'];
     protected $casts = [
         'status' => 'string',

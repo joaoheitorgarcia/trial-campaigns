@@ -9,6 +9,8 @@ class ContactList extends Model
 {
     use HasFactory;
 
+    protected $table = 'contact_lists';
+
     protected $fillable = ['name'];
     protected $casts = [
         'name' => 'string',

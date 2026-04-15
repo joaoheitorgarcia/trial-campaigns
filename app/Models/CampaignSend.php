@@ -19,6 +19,8 @@ class CampaignSend extends Model
         self::STATUS_FAILED,
     ];
 
+    protected $table = 'campaign_sends';
+
     protected $fillable = ['campaign_id', 'contact_id', 'status', 'error_message'];
     protected $casts = [
         'status' => 'string',
